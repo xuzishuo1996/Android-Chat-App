@@ -58,7 +58,7 @@ public class MyLoginActivity extends AppCompatActivity {
         buttonSignup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MyLoginActivity.this,SignUpActivity.class);
+                Intent intent = new Intent(MyLoginActivity.this, SignUpActivity.class);
                 startActivity(intent);
             }
         });
@@ -77,7 +77,8 @@ public class MyLoginActivity extends AppCompatActivity {
             public void onComplete(@NonNull Task<AuthResult> task) {
 
                 if (task.isSuccessful()) {
-                    Intent intent = new Intent(MyLoginActivity.this, MyLoginActivity.class);
+                    Intent intent = new Intent(MyLoginActivity.this, MainActivity.class);
+                    startActivity(intent);
                     Toast.makeText(MyLoginActivity.this,
                             "Sign in is successful.", Toast.LENGTH_SHORT).show();
                 } else {
