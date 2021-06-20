@@ -12,12 +12,17 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 
 import java.util.UUID;
@@ -34,6 +39,8 @@ public class SignUpActivity extends AppCompatActivity {
     FirebaseAuth auth;
     FirebaseDatabase database;
     DatabaseReference reference;
+    FirebaseStorage firebaseStorage;
+    StorageReference storageReference;
 
     Uri imageUri;
 
@@ -51,6 +58,8 @@ public class SignUpActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
         reference = database.getReference();
+        firebaseStorage = FirebaseStorage.getInstance();
+        storageReference = firebaseStorage.getReference();
 
         imageViewCircle.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -76,7 +85,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     public void imageChooser() {
         Intent intent = new Intent();
-        intent.setType("images/*");
+        intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(intent, 1);
     }
@@ -105,7 +114,31 @@ public class SignUpActivity extends AppCompatActivity {
                     reference.child("Users").child(auth.getUid()).child("userName").setValue(userName);
 
                     if (imageControl) {
-                        
+                        UUID randomId = UUID.randomUUID();
+                        String imageName = "images/" + randomId + ".jpg";
+                        storageReference.child(imageName).putFile(imageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                StorageReference myStorageRef = firebaseStorage.getReference(imageName);
+                                myStorageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        String filepath = uri.toString();
+                                        reference.child("Users").child(auth.getUid()).child("image").setValue(filepath).addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void unused) {
+                                                Toast.makeText(SignUpActivity.this, "Write to database is successful.", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }).addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Toast.makeText(SignUpActivity.this, "Write to database is not successful.", Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
                     } else {
                         reference.child("Users").child(auth.getUid()).child("image").setValue("null");
                     }
